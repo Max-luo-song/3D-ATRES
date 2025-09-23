@@ -3,13 +3,6 @@
 # 🎯 3D-ATRES: Ambiguity-Tolerant Learning for 3D Referring Expression Segmentation
 
 
-[Jiangming Shi](xxx), [Chaoyang Li](), [Luosong Guo]()
-
-</div>
-
-<div align="center">
-  <img src="./assets/demo.gif" alt="3D-ATRES Demo" width="800">
-  <p><em>3D-ATRES accurately segments target objects from ambiguous natural language descriptions</em></p>
 </div>
 
 ## 🔍 Introduction
@@ -109,18 +102,3 @@ We welcome contributions from the community! Areas of interest include:
 
 *Contributing guidelines will be released with the code.*
 
-## 📜 Citation
-
-If you use 3D-ATRES in your research or find our work helpful, please cite our paper:
-
-```bibtex
-@inproceedings{shi20253datres,
-  title = {3D-ATRES: Ambiguity-Tolerant Learning for 3D Referring Expression Segmentation},
-  author = {Shi, Jiangming and Li, Chaoyang and Guo, Luosong},
-  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
-  year = {2025},
-  volume = {39},
-  number = {12},
-  pages = {12345--12353},
-  publisher = {xxxx}
-}
