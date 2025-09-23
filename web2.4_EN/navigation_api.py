@@ -22,7 +22,7 @@ from habitat.utils.visualizations.utils import (
 # 设置路径
 current_script_path = os.path.abspath(__file__)
 current_script_dir = os.path.dirname(current_script_path)
-submodules_dir = os.path.join(current_script_dir, '../habitat-lab-old/habitat-lab')
+submodules_dir = os.path.join(current_script_dir, 'habitat-lab')
 sys.path.append(submodules_dir)
 
 # 静默日志
@@ -68,7 +68,7 @@ class NavigationAPI:
     """
     
     def __init__(self, 
-                 yaml_path: str = "/root/sjm/habitat-lab-old/habitat-lab/habitat/config/benchmark/nav/pointnav/pointnav_scannet.yaml",
+                 yaml_path: str = "config/benchmark/nav/pointnav/pointnav_scannet.yaml",
                  scene_path: Optional[str] = None,
                  start_position: Optional[List[float]] = None,
                  goal_radius: float = 0.2,
@@ -166,8 +166,8 @@ class NavigationAPI:
         """更新数据集配置文件，将scene_path写入其中"""
         import gzip
         
-        dataset_path = "/root/sjm/habitat-lab-old/data/datasets/pointnav/v1/train/train1.json"
-        dataset_gz_path = "/root/sjm/habitat-lab-old/data/datasets/pointnav/v1/train/train1.json.gz"
+        dataset_path = "data/datasets/pointnav/v1/train/train1.json"
+        dataset_gz_path = "data/datasets/pointnav/v1/train/train1.json.gz"
         
         # 确保目录存在
         os.makedirs(os.path.dirname(dataset_path), exist_ok=True)
@@ -647,7 +647,7 @@ def quick_navigate(ply_path: str,
                   jsonl_path: str, 
                   output_path: str,
                   scene_path: Optional[str] = None,
-                  yaml_path: str = "/root/sjm/habitat-lab-old/habitat-lab/habitat/config/benchmark/nav/pointnav/pointnav_scannet.yaml") -> str:
+                  yaml_path: str = "config/benchmark/nav/pointnav/pointnav_scannet.yaml") -> str:
     """
     快速导航函数
     
@@ -677,7 +677,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_path", required=True, help="输出目录路径")
     parser.add_argument("--scene_path", help="场景文件路径 (.glb)")
     parser.add_argument("--yaml_path", 
-                       default="/root/sjm/habitat-lab-old/habitat-lab/habitat/config/benchmark/nav/pointnav/pointnav_scannet.yaml",
+                       default="config/benchmark/nav/pointnav/pointnav_scannet.yaml",
                        help="Habitat配置文件路径")
     parser.add_argument("--video_name", help="自定义视频名称")
     
