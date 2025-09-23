@@ -64,13 +64,13 @@ sys.path.insert(0, project_root)
 # Since your real model is not accessible, a mock class is created here to ensure the program runs
 # Note: Make sure your ModelWrapper and related dependencies are available
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = "/root/sjm/3DLLM"
+project_root = "3DLLM"
 sys.path.insert(0, project_root)
 from llmapi import ModelWrapper
 from llmapi import ModelWrapper
 
-MODEL_PATH = "/root/lanyun-fs/public_model/finetune-3d-llava-lora-0801-W08GMM0CL05COT0-bs-2-gpu8-V7-best"
-MODEL_BASE_PATH = "/root/lanyun-fs/public_model/llava-v1.5-7b"
+MODEL_PATH = "public_model/finetune-3d-llava-lora-0801-W08GMM0CL05COT0-bs-2-gpu8-V7-best"
+MODEL_BASE_PATH = "public_model/llava-v1.5-7b"
 
 print("Loading 3D large model, please wait...")
 model_wrapper = ModelWrapper(
@@ -110,7 +110,7 @@ def execute_video_generation_logic(pointcloud_full_path, mask):
 
         # Create an instance of the navigation API
         api = NavigationAPI(
-            yaml_path="/root/sjm/habitat-lab-old/habitat-lab/habitat/config/benchmark/nav/pointnav/pointnav_scannet.yaml",
+            yaml_path="config/benchmark/nav/pointnav/pointnav_scannet.yaml",
             scene_path=scene_path
         )
 
