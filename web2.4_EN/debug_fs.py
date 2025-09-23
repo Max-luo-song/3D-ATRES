@@ -1,7 +1,7 @@
 
 import os
 
-dir_path = '/root/sjm/3DLLM'
+dir_path = '3DLLM'
 target_filename = 'llmapi.py'
 
 print(f"--- Checking contents of: {dir_path} ---")
