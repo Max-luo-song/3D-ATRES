@@ -87,9 +87,9 @@ We provide an **[interactive online demo](http://521661fbe9494e65b3805ad5028c5cc
 ## 🗓️ Release Timeline
 
 - [x] **Sept 2025**: Visualization tools released (`web2.4_EN/`)
-- [ ] **Paper Received**: Training code and pretrained models
-- [ ] **Paper Received**: Full documentation and tutorials
-- [ ] **Paper Received**: Extended benchmarks and applications
+- [ ] **Paper Accepted**: Training code and pretrained models
+- [ ] **Paper Accepted**: Full documentation and tutorials
+- [ ] **Paper Accepted**: Extended benchmarks and applications
 
 ## 🤝 Contributing
 
