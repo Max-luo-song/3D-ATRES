@@ -71,7 +71,7 @@ We provide an **[interactive online demo](http://521661fbe9494e65b3805ad5028c5cc
 
 #### Example 1: Complex Spatial Relationships
 <div align="center">
-    <img src="assets/example1.png" alt="Example 1" width="600">
+    <img src="assets/example1.gif" alt="Example 1" width="600">
 </div>
 
 #### Example 2: Ambiguous Object Descriptions  
