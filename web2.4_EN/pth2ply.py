@@ -8,8 +8,8 @@ import glob
 
 def convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face_key):
     """
-    将单个 .pth 文件转换为 .ply 文件。
-    此版本经过修改，可以处理坐标和颜色在字典中作为独立键的情况。
+    Convert a single .pth file to .ply file.
+    This version has been modified to handle cases where coordinates and colors exist as independent keys in the dictionary.
     """
     try:
         data = torch.load(pth_path, map_location=torch.device('cpu'))
@@ -20,20 +20,20 @@ def convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face
     if data_type == 'pointcloud':
         pcd = o3d.geometry.PointCloud()
 
-        # --- 新的逻辑：处理字典格式的点云 ---
+        # --- New logic: handle dictionary format point cloud ---
         if isinstance(data, dict):
-            # 1. 提取坐标 (必要)
+            # 1. Extract coordinates (required)
             if vert_key not in data:
-                raise KeyError(f"坐标键 '{vert_key}' 不在字典中。可用键: {list(data.keys())}")
+                raise KeyError(f"Coordinate key '{vert_key}' not found in dictionary. Available keys: {list(data.keys())}")
 
             points = data[vert_key]
             if isinstance(points, torch.Tensor):
                 points = points.cpu().numpy()
 
             pcd.points = o3d.utility.Vector3dVector(points[:, :3].astype(np.float64))
-            print(f"    - 从键 '{vert_key}' 加载了 {len(points)} 个点。")
+            print(f"    - Loaded {len(points)} points from key '{vert_key}'.")
 
-            # 2. 提取颜色 (可选)
+            # 2. Extract colors (optional)
             if color_key in data:
                 colors = data[color_key]
                 if isinstance(colors, torch.Tensor):
@@ -41,17 +41,17 @@ def convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face
 
                 if colors.shape[0] != points.shape[0]:
                     print(
-                        f"    - 警告: 点的数量 ({points.shape[0]}) 和颜色的数量 ({colors.shape[0]}) 不匹配。将忽略颜色。")
+                        f"    - Warning: Number of points ({points.shape[0]}) and colors ({colors.shape[0]}) do not match. Colors will be ignored.")
                 else:
-                    # 如果颜色值范围是 0-255，归一化到 0-1
+                    # If color values are in range 0-255, normalize to 0-1
                     if np.max(colors) > 1.0:
                         colors = colors / 255.0
                     pcd.colors = o3d.utility.Vector3dVector(colors[:, :3].astype(np.float64))
-                    print(f"    - 从键 '{color_key}' 加载了颜色。")
+                    print(f"    - Loaded colors from key '{color_key}'.")
             else:
-                print(f"    - 警告: 未在字典中找到颜色键 '{color_key}'。")
+                print(f"    - Warning: Color key '{color_key}' not found in dictionary.")
 
-        # --- 旧的逻辑：处理原始张量格式的点云 (作为备用) ---
+        # --- Old logic: handle original tensor format point cloud (as fallback) ---
         elif isinstance(data, torch.Tensor):
             points = data.cpu().numpy()
             pcd.points = o3d.utility.Vector3dVector(points[:, :3].astype(np.float64))
@@ -61,16 +61,16 @@ def convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face
                     colors = colors / 255.0
                 pcd.colors = o3d.utility.Vector3dVector(colors.astype(np.float64))
         else:
-            raise TypeError(f"不支持的数据类型: {type(data)}。数据应为字典或张量。")
+            raise TypeError(f"Unsupported data type: {type(data)}. Data should be a dictionary or tensor.")
 
         o3d.io.write_point_cloud(ply_path, pcd)
 
     elif data_type == 'mesh':
-        # 网格处理逻辑保持不变
+        # Mesh processing logic remains unchanged
         if not isinstance(data, dict):
-            raise ValueError("对于网格类型, 数据必须是字典。")
+            raise ValueError("For mesh type, data must be a dictionary.")
         if vert_key not in data or face_key not in data:
-            raise KeyError(f"网格所需的键 ('{vert_key}', '{face_key}') 不在字典中。可用键: {list(data.keys())}")
+            raise KeyError(f"Required keys for mesh ('{vert_key}', '{face_key}') not found in dictionary. Available keys: {list(data.keys())}")
 
         vertices = data[vert_key].cpu().numpy()
         faces = data[face_key].cpu().numpy()
@@ -82,23 +82,23 @@ def convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face
 
         o3d.io.write_triangle_mesh(ply_path, mesh)
     else:
-        raise ValueError(f"未知的数据类型 '{data_type}'。请使用 'pointcloud' 或 'mesh'。")
+        raise ValueError(f"Unknown data type '{data_type}'. Please use 'pointcloud' or 'mesh'.")
 
 
 def batch_convert(input_dir, output_dir, data_type, vert_key, color_key, face_key):
     if not os.path.isdir(input_dir):
-        print(f"错误：输入文件夹 '{input_dir}' 不存在。")
+        print(f"Error: Input folder '{input_dir}' does not exist.")
         return
 
     os.makedirs(output_dir, exist_ok=True)
-    print(f"输出文件将保存至: '{output_dir}'")
+    print(f"Output files will be saved to: '{output_dir}'")
 
     pth_files = glob.glob(os.path.join(input_dir, '*.pth'))
     if not pth_files:
-        print(f"在 '{input_dir}' 中未找到 .pth 文件。")
+        print(f"No .pth files found in '{input_dir}'.")
         return
 
-    print(f"找到 {len(pth_files)} 个 .pth 文件，开始转换...")
+    print(f"Found {len(pth_files)} .pth files, starting conversion...")
     success_count, fail_count = 0, 0
 
     for pth_path in pth_files:
@@ -106,35 +106,35 @@ def batch_convert(input_dir, output_dir, data_type, vert_key, color_key, face_ke
         ply_filename = os.path.splitext(base_filename)[0] + '.ply'
         ply_path = os.path.join(output_dir, ply_filename)
 
-        print(f"\n[处理中] '{base_filename}'")
+        print(f"\n[Processing] '{base_filename}'")
         try:
             convert_single_file(pth_path, ply_path, data_type, vert_key, color_key, face_key)
-            print(f"  -> [成功] 已保存为 '{ply_path}'")
+            print(f"  -> [Success] Saved as '{ply_path}'")
             success_count += 1
         except Exception as e:
-            print(f"  -> [失败] 转换时发生错误: {e}")
+            print(f"  -> [Failed] Error during conversion: {e}")
             fail_count += 1
 
     print("\n" + "=" * 50)
-    print("批量转换完成！")
-    print(f"成功: {success_count}")
-    print(f"失败: {fail_count}")
+    print("Batch conversion completed!")
+    print(f"Success: {success_count}")
+    print(f"Failed: {fail_count}")
     print("=" * 50)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="批量将一个文件夹内的 .pth 3D文件转换为 .ply 文件。")
-    parser.add_argument("input_dir", type=str, help="包含 .pth 文件的输入文件夹路径。")
-    parser.add_argument("output_dir", type=str, help="用于保存 .ply 文件的输出文件夹路径。")
+    parser = argparse.ArgumentParser(description="Batch convert .pth 3D files in a folder to .ply files.")
+    parser.add_argument("input_dir", type=str, help="Input folder path containing .pth files.")
+    parser.add_argument("output_dir", type=str, help="Output folder path for saving .ply files.")
     parser.add_argument("--type", type=str, required=True, choices=['pointcloud', 'mesh'],
-                        help="所有.pth文件中的3D数据类型: 'pointcloud' (点云) 或 'mesh' (网格)。")
-    # 修改了默认值以匹配您的数据格式
+                        help="3D data type in all .pth files: 'pointcloud' or 'mesh'.")
+    # Modified default values to match your data format
     parser.add_argument("--vert_key", type=str, default="coord",
-                        help="顶点/点云坐标数据的字典键名。默认: 'coord'")
+                        help="Dictionary key name for vertex/point cloud coordinate data. Default: 'coord'")
     parser.add_argument("--color_key", type=str, default="color",
-                        help="颜色数据的字典键名 (可选)。默认: 'color'")
+                        help="Dictionary key name for color data (optional). Default: 'color'")
     parser.add_argument("--face_key", type=str, default="faces",
-                        help="面数据的字典键名 (仅用于 'mesh' 类型)。默认: 'faces'")
+                        help="Dictionary key name for face data (only for 'mesh' type). Default: 'faces'")
 
     args = parser.parse_args()
 

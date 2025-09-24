@@ -19,20 +19,20 @@ from habitat.utils.visualizations.utils import (
     overlay_frame,
 )
 
-# 设置路径
+# Set paths
 current_script_path = os.path.abspath(__file__)
 current_script_dir = os.path.dirname(current_script_path)
 submodules_dir = os.path.join(current_script_dir, 'habitat-lab')
 sys.path.append(submodules_dir)
 
-# 静默日志
+# Silent logging
 os.environ["MAGNUM_LOG"] = "quiet"
 os.environ["HABITAT_SIM_LOG"] = "quiet"
 
-# 设置CPU渲染环境变量
+# Set CPU rendering environment variables
 # os.environ["EGL_DEVICE_ID"] = "-1"
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
-# # 不设置MAGNUM_DEVICE为cpu，让它自动选择合适的渲染后端
+# # Do not set MAGNUM_DEVICE to cpu, let it automatically choose the appropriate rendering backend
 # # os.environ["MAGNUM_DEVICE"] = "cpu"
 # os.environ["HABITAT_SIM_HEADLESS"] = "1"
 
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
 
 class ShortestPathFollowerAgent(Agent):
-    """最短路径跟随智能体"""
+    """Shortest path following agent"""
     
     def __init__(self, env: habitat.Env, goal_radius: float):
         self.env = env
@@ -62,9 +62,9 @@ class ShortestPathFollowerAgent(Agent):
 
 
 class NavigationAPI:
-    """Habitat导航API接口类
-    
-    提供基于点云和语义分割结果的导航功能，生成导航视频。
+    """Habitat navigation API interface class
+
+    Provides navigation functionality based on point clouds and semantic segmentation results, generating navigation videos.
     """
     
     def __init__(self, 
@@ -75,29 +75,29 @@ class NavigationAPI:
                  fps: int = 6,
                  video_quality: int = 9):
         """
-        初始化导航API
-        
+        Initialize navigation API
+
         Args:
-            yaml_path: Habitat配置文件路径
-            scene_path: 场景文件路径 (.glb文件)
-            start_position: 起始位置坐标 [x, y, z]，如果为None则根据场景边界自动计算
-            goal_radius: 目标半径
-            fps: 视频帧率
-            video_quality: 视频质量 (1-10)
+            yaml_path: Habitat configuration file path
+            scene_path: Scene file path (.glb file)
+            start_position: Starting position coordinates [x, y, z], if None, automatically calculated based on scene boundaries
+            goal_radius: Target radius
+            fps: Video frame rate
+            video_quality: Video quality (1-10)
         """
         self.yaml_path = yaml_path
         self.scene_path = scene_path
-        self.start_position = start_position  # 不再设置默认值，将在运行时计算
+        self.start_position = start_position  # No longer set default value, will be calculated at runtime
         self.goal_radius = goal_radius
         self.fps = fps
         self.video_quality = video_quality
         
     def _load_point_cloud(self, ply_path: str) -> np.ndarray:
-        """加载并预处理点云数据"""
+        """Load and preprocess point cloud data"""
         pcd = o3d.io.read_point_cloud(ply_path)
         points = np.asarray(pcd.points)
         
-        # 坐标系平移：将点云坐标系从以0为中心转换为从0开始
+        # Coordinate system translation: convert point cloud coordinate system from centered at 0 to starting from 0
         x_offset = -points[:, 0].min()
         y_offset = -points[:, 1].min()
         z_offset = 0
@@ -109,36 +109,36 @@ class NavigationAPI:
         return points
     
     def _load_segmentation_mask(self, jsonl_path: str) -> np.ndarray:
-        """加载语义分割掩码"""
+        """Load semantic segmentation mask"""
         with open(jsonl_path, "r") as f:
             for line in f:
                 data = json.loads(line)
                 return np.array(data["pred_mask"])
-        raise ValueError("无法从JSONL文件中读取分割掩码")
+        raise ValueError("Unable to read segmentation mask from JSONL file")
     
     def _transform_coordinates(self, target_center: np.ndarray) -> np.ndarray:
-        """坐标系转换：点云坐标系 -> Habitat坐标系"""
-        # 点云: [x, y, z] -> Habitat: [x, z, -y]
+        """Coordinate system transformation: point cloud coordinate system -> Habitat coordinate system"""
+        # Point cloud: [x, y, z] -> Habitat: [x, z, -y]
         transformed = target_center.copy()
         transformed[1], transformed[2] = transformed[2], -transformed[1]
         return transformed
     
     def _create_habitat_config(self, scene_path: Optional[str] = None) -> habitat.config:
-        """创建Habitat配置"""
+        """Create Habitat configuration"""
         config = habitat.get_config(config_path=self.yaml_path)
         
         with habitat.config.read_write(config):
-            # 如果指定了场景路径，则覆盖配置中的场景设置
+            # If scene path is specified, override the scene settings in configuration
             if scene_path:
-                # 转换为绝对路径
+                # Convert to absolute path
                 abs_scene_path = os.path.abspath(scene_path)
                 config.habitat.simulator.scene = abs_scene_path
                 
-                # 更新数据集配置文件
+                # Update dataset configuration file
                 self._update_dataset_config(abs_scene_path)
             
-            # 配置CPU渲染模式，但保持传感器正常工作
-            config.habitat.simulator.habitat_sim_v0.gpu_device_id = -1  # 使用CPU
+            # Configure CPU rendering mode, but keep sensors working normally
+            config.habitat.simulator.habitat_sim_v0.gpu_device_id = -1  # Use CPU
             config.habitat.simulator.habitat_sim_v0.enable_physics = True
                 
             config.habitat.task.measurements.update({
@@ -163,42 +163,42 @@ class NavigationAPI:
         return config
     
     def _update_dataset_config(self, scene_path: str):
-        """更新数据集配置文件，将scene_path写入其中"""
+        """Update dataset configuration file, write scene_path into it"""
         import gzip
         
         dataset_path = "data/datasets/pointnav/v1/train/train1.json"
         dataset_gz_path = "data/datasets/pointnav/v1/train/train1.json.gz"
         
-        # 确保目录存在
+        # Ensure directory exists
         os.makedirs(os.path.dirname(dataset_path), exist_ok=True)
         
-        # 读取现有配置或创建新配置
+        # Read existing configuration or create new configuration
         if os.path.exists(dataset_path):
             with open(dataset_path, 'r') as f:
                 dataset_config = json.load(f)
         else:
             dataset_config = {"episodes": []}
         
-        # 只更新episodes列表中第一个字典的scene_id字段
+        # Only update the scene_id field in the first dictionary of the episodes list
         if "episodes" in dataset_config and len(dataset_config["episodes"]) > 0:
             dataset_config["episodes"][0]["scene_id"] = scene_path
         
-        # 写回JSON文件
+        # Write back to JSON file
         with open(dataset_path, 'w') as f:
             json.dump(dataset_config, f, indent=2)
         
-        # 自动生成压缩的.gz文件
+        # Automatically generate compressed .gz file
         with open(dataset_path, 'rb') as f_in:
             with gzip.open(dataset_gz_path, 'wb') as f_out:
                 f_out.write(f_in.read())
     
     def _create_custom_episode(self, scene_path: str, start_position: List[float], target_position: List[float]) -> NavigationEpisode:
-        """创建自定义导航episode"""
+        """Create custom navigation episode"""
         episode = NavigationEpisode(
             episode_id="0",
             scene_id=scene_path,
             start_position=start_position,
-            start_rotation=[0, 0, 0, 1],  # 默认朝向
+            start_rotation=[0, 0, 0, 1],  # Default orientation
             goals=[NavigationGoal(
                 position=target_position,
                 radius=self.goal_radius
@@ -207,20 +207,20 @@ class NavigationAPI:
         return episode
     
     def _calculate_start_position(self, env: habitat.Env, fixed_height: float = 0.41561477) -> List[float]:
-        """根据场景边界计算合适的起始位置"""
+        """Calculate appropriate starting position based on scene boundaries"""
         lower, upper = env.sim.pathfinder.get_bounds()
         
-        # 计算x和z轴的中心位置，y轴使用固定高度
-        # 确保所有值都是Python原生float类型，避免numpy类型转换错误
+        # Calculate center position for x and z axes, use fixed height for y axis
+        # Ensure all values are Python native float types to avoid numpy type conversion errors
         center_x = float((lower[0] + upper[0]) / 2.0)
         center_z = float((lower[2] + upper[2]) / 2.0)
         start_pos = [center_x, float(fixed_height), center_z]
         
-        # 检查计算出的位置是否可导航，如果不可导航则尝试附近的位置
+        # Check if the calculated position is navigable, try nearby positions if not navigable
         if not env.sim.pathfinder.is_navigable(start_pos):
-            print(f"⚠️  计算的中心位置不可导航: {start_pos}，正在寻找附近的可导航位置...")
+            print(f"⚠️  Calculated center position is not navigable: {start_pos}, searching for nearby navigable positions...")
             
-            # 在中心位置周围搜索可导航的位置
+            # Search for navigable positions around the center position
             search_radius = 0.5
             search_step = 0.1
             found_navigable = False
@@ -228,68 +228,68 @@ class NavigationAPI:
             for offset_x in np.arange(-search_radius, search_radius + search_step, search_step):
                 for offset_z in np.arange(-search_radius, search_radius + search_step, search_step):
                     test_pos = [float(center_x + offset_x), float(fixed_height), float(center_z + offset_z)]
-                    # 确保测试位置在边界内
+                    # Ensure test position is within boundaries
                     if (lower[0] <= test_pos[0] <= upper[0] and 
                         lower[2] <= test_pos[2] <= upper[2] and
                         env.sim.pathfinder.is_navigable(test_pos)):
                         start_pos = test_pos
                         found_navigable = True
-                        print(f"✅ 找到可导航的起始位置: {start_pos}")
+                        print(f"✅ Found navigable starting position: {start_pos}")
                         break
                 if found_navigable:
                     break
             
             if not found_navigable:
-                print(f"⚠️  未找到可导航的起始位置，使用边界内的默认位置")
-                # 使用边界内的一个相对安全的位置
+                print(f"⚠️  No navigable starting position found, using default position within boundaries")
+                # Use a relatively safe position within boundaries
                 start_pos = [float(lower[0] + 1.0), float(fixed_height), float(lower[2] + 1.0)]
         else:
-            print(f"✅ 计算的中心位置可导航: {start_pos}")
+            print(f"✅ Calculated center position is navigable: {start_pos}")
         
         return start_pos
     
     def _validate_and_adjust_goal(self, target_center: np.ndarray, env: habitat.Env) -> np.ndarray:
-        """验证并调整目标坐标到导航网格边界内，并确保位置可导航"""
+        """Validate and adjust target coordinates within navigation mesh boundaries, and ensure position is navigable"""
         lower, upper = env.sim.pathfinder.get_bounds()
-        print(f"导航网格边界:")
-        print(f"  下限: {lower}")
-        print(f"  上限: {upper}")
+        print(f"Navigation mesh boundaries:")
+        print(f"  Lower bound: {lower}")
+        print(f"  Upper bound: {upper}")
 
-        print(f"目标坐标:",target_center)
+        print(f"Target coordinates:",target_center)
         original_target = target_center.copy()
         
-        # 首先将坐标调整到边界内
+        # First adjust coordinates to within boundaries
         target_center[0] = np.clip(target_center[0], lower[0], upper[0])
         target_center[1] = np.clip(target_center[1], lower[1], upper[1])
         target_center[2] = np.clip(target_center[2], lower[2], upper[2])
         
         if not np.allclose(original_target, target_center):
-            print(f"⚠️  目标坐标已调整到边界内:")
-            print(f"  原始坐标: {original_target}")
-            print(f"  调整后坐标: {target_center}")
+            print(f"⚠️  Target coordinates adjusted to within boundaries:")
+            print(f"  Original coordinates: {original_target}")
+            print(f"  Adjusted coordinates: {target_center}")
         
-        # 检查调整后的位置是否可导航
+        # Check if adjusted position is navigable
         target_pos = target_center.tolist()
         if env.sim.pathfinder.is_navigable(target_pos):
-            print(f"✅ 目标位置可导航: {target_pos}")
+            print(f"✅ Target position is navigable: {target_pos}")
             return target_center
         
-        print(f"⚠️  目标位置不可导航: {target_pos}，正在寻找最近的可导航位置...")
+        print(f"⚠️  Target position is not navigable: {target_pos}, searching for nearest navigable position...")
         
-        # 寻找最近的可导航位置
+        # Find nearest navigable position
         best_pos = target_center.copy()
         min_distance = float('inf')
         found_navigable = False
         
-        # 搜索参数
-        max_search_radius = 2.0  # 最大搜索半径
-        search_step = 0.1  # 搜索步长
+        # Search parameters
+        max_search_radius = 2.0  # Maximum search radius
+        search_step = 0.1  # Search step size
         
         for radius in np.arange(search_step, max_search_radius + search_step, search_step):
-            # 在当前半径的球面上搜索
-            for theta in np.arange(0, 2 * np.pi, np.pi / 8):  # 8个方向
-                for phi in np.arange(0, np.pi, np.pi / 4):  # 4个高度层
-                    # 球坐标转笛卡尔坐标
+            # Search on sphere surface with current radius
+            for theta in np.arange(0, 2 * np.pi, np.pi / 8):  # 8 directions
+                for phi in np.arange(0, np.pi, np.pi / 4):  # 4 height levels
+                    # Convert spherical coordinates to Cartesian coordinates
                     offset_x = radius * np.sin(phi) * np.cos(theta)
                     offset_y = radius * np.cos(phi)
                     offset_z = radius * np.sin(phi) * np.sin(theta)
@@ -300,29 +300,29 @@ class NavigationAPI:
                         float(target_center[2] + offset_z)
                     ]
                     
-                    # 确保测试位置在边界内
+                    # Ensure test position is within boundaries
                     if (lower[0] <= test_pos[0] <= upper[0] and 
                         lower[1] <= test_pos[1] <= upper[1] and
                         lower[2] <= test_pos[2] <= upper[2]):
                         
                         if env.sim.pathfinder.is_navigable(test_pos):
-                            # 计算与原始目标的距离
+                            # Calculate distance to original target
                             distance = np.linalg.norm(np.array(test_pos) - original_target)
                             if distance < min_distance:
                                 min_distance = distance
                                 best_pos = np.array(test_pos)
                                 found_navigable = True
             
-            # 如果在当前半径找到了可导航位置，就不再扩大搜索范围
+            # If navigable position found at current radius, do not expand search range
             if found_navigable:
                 break
         
         if found_navigable:
-            print(f"✅ 找到最近的可导航位置: {best_pos.tolist()}")
-            print(f"   与原始目标的距离: {min_distance:.3f}")
+            print(f"✅ Found nearest navigable position: {best_pos.tolist()}")
+            print(f"   Distance to original target: {min_distance:.3f}")
             return best_pos
         else:
-            print(f"⚠️  未找到可导航位置，使用边界调整后的位置: {target_center.tolist()}")
+            print(f"⚠️  No navigable position found, using boundary-adjusted position: {target_center.tolist()}")
             return target_center
     
     def navigate_to_target_with_mask(self, 
@@ -332,57 +332,57 @@ class NavigationAPI:
                           scene_path: Optional[str] = None,
                           video_name: Optional[str] = None) -> Tuple[str, dict]:
         """
-        执行导航任务并生成视频（直接使用mask）
+                Execute navigation task and generate video (directly using mask)
         
         Args:
-            ply_path: 点云文件路径 (.ply)
-            pred_mask: 语义分割掩码数组
-            output_path: 输出目录路径
-            scene_path: 场景文件路径 (.glb)，如果为None则使用初始化时的scene_path或配置文件中的默认场景
-            video_name: 自定义视频名称，如果为None则自动生成
+            ply_path: Point cloud file path (.ply)
+            pred_mask: Semantic segmentation mask array
+            output_path: Output directory path
+            scene_path: Scene file path (.glb), if None, use scene_path from initialization or default scene in config file
+            video_name: Custom video name, if None, automatically generated
             
         Returns:
-            Tuple[str, dict]: (视频文件路径, 导航统计信息)
+            Tuple[str, dict]: (video file path, navigation statistics)
             
         Raises:
-            ValueError: 当未检测到目标点或文件不存在时
-            FileNotFoundError: 当输入文件不存在时
+            ValueError: When no target points are detected or files do not exist
+            FileNotFoundError: When input files do not exist
         """
-        # 验证输入文件
+        # Validate input files
         if not os.path.exists(ply_path):
-            raise FileNotFoundError(f"点云文件不存在: {ply_path}")
+            raise FileNotFoundError(f"Point cloud file does not exist: {ply_path}")
         
-        # 加载数据
+        # Load data
         points = self._load_point_cloud(ply_path)
         
-        # 提取目标点
+        # Extract target points
         target_points = points[pred_mask == 1]
         if len(target_points) == 0:
-            raise ValueError("未检测到任何目标点")
+            raise ValueError("No target points detected")
         
         target_center = target_points.mean(axis=0)
         target_center = self._transform_coordinates(target_center)
         
-        # 确定使用的场景路径
+        # Determine the scene path to use
         used_scene_path = scene_path or self.scene_path
         if not used_scene_path:
-            raise ValueError("必须指定场景文件路径，可以通过scene_path参数或初始化时的scene_path参数指定")
+            raise ValueError("Scene file path must be specified, either through scene_path parameter or scene_path parameter during initialization")
         
-        # 验证场景文件是否存在
+        # Validate if scene file exists
         if not os.path.exists(used_scene_path):
-            raise FileNotFoundError(f"场景文件不存在: {used_scene_path}")
+            raise FileNotFoundError(f"Scene file does not exist: {used_scene_path}")
         
-        # 创建配置和环境
+        # Create configuration and environment
         config = self._create_habitat_config(used_scene_path)
         
         with habitat.Env(config=config) as env:
-            # 如果没有指定起始位置，则根据场景边界计算
+            # If no starting position specified, calculate based on scene boundaries
             if self.start_position is None:
                 calculated_start_position = self._calculate_start_position(env)
             else:
                 calculated_start_position = self.start_position.copy()
             
-            # 导航统计信息
+            # Navigation statistics
             nav_stats = {
                 "target_points_count": len(target_points),
                 "original_target_center": target_center.copy(),
@@ -390,43 +390,43 @@ class NavigationAPI:
                 "scene_path": used_scene_path
             }
             
-            # 验证和调整目标坐标
+            # Validate and adjust target coordinates
             target_center = self._validate_and_adjust_goal(target_center, env)
             nav_stats["adjusted_target_center"] = target_center.copy()
             
-            # 创建自定义episode
+            # Create custom episode
             custom_episode = self._create_custom_episode(
                 scene_path=used_scene_path,
                 start_position=calculated_start_position,
                 target_position=target_center.tolist()
             )
             
-            # 手动设置当前episode
+            # Manually set current episode
             env._current_episode = custom_episode
             
-            # episode中的目标位置已经在创建时设置好了
+            # Target position in episode has been set during creation
             
-            # 创建智能体
+            # Create agent
             agent = ShortestPathFollowerAgent(
                 env=env,
                 goal_radius=config.habitat.task.measurements.success.success_distance,
             )
             
-            # 执行导航
+            # Execute navigation
             observations = env.reset()
             agent.reset()
             
             vis_frames = []
             step_count = 0
             
-            # 初始帧
+            # Initial frame
             info = env.get_metrics()
             frame = observations_to_image(observations, info)
             info.pop("top_down_map")
             frame = overlay_frame(frame, info)
             vis_frames.append(frame)
             
-            # 导航循环
+            # Navigation loop
             while not env.episode_over:
                 action = agent.act(observations)
                 if action is None:
@@ -443,7 +443,7 @@ class NavigationAPI:
             nav_stats["total_steps"] = step_count
             nav_stats["success"] = env.episode_over
             
-            # 生成视频
+            # Generate video
             if video_name is None:
                 ply_filename = os.path.splitext(os.path.basename(ply_path))[0]
                 scene_id = os.path.splitext(os.path.basename(custom_episode.scene_id))[0]
@@ -455,7 +455,7 @@ class NavigationAPI:
                 fps=self.fps, quality=self.video_quality
             )
             
-            # 手动构建视频文件路径，因为images_to_video函数不返回路径
+            # Manually construct video file path as images_to_video function does not return path
             video_name = video_name.replace(" ", "_").replace("\n", "_")
             video_name_split = video_name.split("/")
             video_name = "/".join(
@@ -475,60 +475,60 @@ class NavigationAPI:
                           scene_path: Optional[str] = None,
                           video_name: Optional[str] = None) -> Tuple[str, dict]:
         """
-        执行导航任务并生成视频
-        
+        Execute navigation task and generate video
+
         Args:
-            ply_path: 点云文件路径 (.ply)
-            jsonl_path: 语义分割结果文件路径 (.jsonl)
-            output_path: 输出目录路径
-            scene_path: 场景文件路径 (.glb)，如果为None则使用初始化时的scene_path或配置文件中的默认场景
-            video_name: 自定义视频名称，如果为None则自动生成
-            
+            ply_path: Point cloud file path (.ply)
+            jsonl_path: Semantic segmentation result file path (.jsonl)
+            output_path: Output directory path
+            scene_path: Scene file path (.glb), if None, use scene_path from initialization or default scene in config file
+            video_name: Custom video name, if None, automatically generated
+
         Returns:
-            Tuple[str, dict]: (视频文件路径, 导航统计信息)
-            
+            Tuple[str, dict]: (video file path, navigation statistics)
+
         Raises:
-            ValueError: 当未检测到目标点或文件不存在时
-            FileNotFoundError: 当输入文件不存在时
+            ValueError: When no target points are detected or files do not exist
+            FileNotFoundError: When input files do not exist
         """
-        # 验证输入文件
+        # Validate input files
         if not os.path.exists(ply_path):
-            raise FileNotFoundError(f"点云文件不存在: {ply_path}")
+            raise FileNotFoundError(f"Point cloud file does not exist: {ply_path}")
         if not os.path.exists(jsonl_path):
-            raise FileNotFoundError(f"JSONL文件不存在: {jsonl_path}")
+            raise FileNotFoundError(f"JSONL file does not exist: {jsonl_path}")
         
-        # 加载数据
+        # Load data
         points = self._load_point_cloud(ply_path)
         pred_mask = self._load_segmentation_mask(jsonl_path)
         
-        # 提取目标点
+        # Extract target points
         target_points = points[pred_mask == 1]
         if len(target_points) == 0:
-            raise ValueError("未检测到任何目标点")
+            raise ValueError("No target points detected")
         
         target_center = target_points.mean(axis=0)
         target_center = self._transform_coordinates(target_center)
         
-        # 确定使用的场景路径
+        # Determine the scene path to use
         used_scene_path = scene_path or self.scene_path
         if not used_scene_path:
-            raise ValueError("必须指定场景文件路径，可以通过scene_path参数或初始化时的scene_path参数指定")
+            raise ValueError("Scene file path must be specified, either through scene_path parameter or scene_path parameter during initialization")
         
-        # 验证场景文件是否存在
+        # Validate if scene file exists
         if not os.path.exists(used_scene_path):
-            raise FileNotFoundError(f"场景文件不存在: {used_scene_path}")
+            raise FileNotFoundError(f"Scene file does not exist: {used_scene_path}")
         
-        # 创建配置和环境
+        # Create configuration and environment
         config = self._create_habitat_config(used_scene_path)
         
         with habitat.Env(config=config) as env:
-            # 如果没有指定起始位置，则根据场景边界计算
+            # If no starting position specified, calculate based on scene boundaries
             if self.start_position is None:
                 calculated_start_position = self._calculate_start_position(env)
             else:
                 calculated_start_position = self.start_position.copy()
             
-            # 导航统计信息
+            # Navigation statistics
             nav_stats = {
                 "target_points_count": len(target_points),
                 "original_target_center": target_center.copy(),
@@ -536,43 +536,43 @@ class NavigationAPI:
                 "scene_path": used_scene_path
             }
             
-            # 验证和调整目标坐标
+            # Validate and adjust target coordinates
             target_center = self._validate_and_adjust_goal(target_center, env)
             nav_stats["adjusted_target_center"] = target_center.copy()
             
-            # 创建自定义episode
+            # Create custom episode
             custom_episode = self._create_custom_episode(
                 scene_path=used_scene_path,
                 start_position=calculated_start_position,
                 target_position=target_center.tolist()
             )
             
-            # 手动设置当前episode
+            # Manually set current episode
             env._current_episode = custom_episode
             
-            # episode中的目标位置已经在创建时设置好了
+            # Target position in episode has been set during creation
             
-            # 创建智能体
+            # Create agent
             agent = ShortestPathFollowerAgent(
                 env=env,
                 goal_radius=config.habitat.task.measurements.success.success_distance,
             )
             
-            # 执行导航
+            # Execute navigation
             observations = env.reset()
             agent.reset()
             
             vis_frames = []
             step_count = 0
             
-            # 初始帧
+            # Initial frame
             info = env.get_metrics()
             frame = observations_to_image(observations, info)
             info.pop("top_down_map")
             frame = overlay_frame(frame, info)
             vis_frames.append(frame)
             
-            # 导航循环
+            # Navigation loop
             while not env.episode_over:
                 action = agent.act(observations)
                 if action is None:
@@ -589,7 +589,7 @@ class NavigationAPI:
             nav_stats["total_steps"] = step_count
             nav_stats["success"] = env.episode_over
             
-            # 生成视频
+            # Generate video
             if video_name is None:
                 ply_filename = os.path.splitext(os.path.basename(ply_path))[0]
                 scene_id = os.path.splitext(os.path.basename(custom_episode.scene_id))[0]
@@ -610,14 +610,14 @@ class NavigationAPI:
                       tasks: List[Tuple[str, str, str, Optional[str]]], 
                       output_base_path: str) -> List[Tuple[str, dict]]:
         """
-        批量执行导航任务
-        
+        Batch execute navigation tasks
+
         Args:
-            tasks: 任务列表，每个任务为 (ply_path, jsonl_path, task_name, scene_path)
-            output_base_path: 输出基础路径
-            
+            tasks: Task list, each task is (ply_path, jsonl_path, task_name, scene_path)
+            output_base_path: Output base path
+
         Returns:
-            List[Tuple[str, dict]]: 每个任务的结果列表
+            List[Tuple[str, dict]]: Result list for each task
         """
         results = []
         
@@ -634,52 +634,52 @@ class NavigationAPI:
                     ply_path, jsonl_path, output_path, scene_path, task_name
                 )
                 results.append((video_path, stats))
-                print(f"✅ 任务 {i+1}/{len(tasks)} 完成: {task_name}")
+                print(f"✅ Task {i+1}/{len(tasks)} completed: {task_name}")
             except Exception as e:
-                print(f"❌ 任务 {i+1}/{len(tasks)} 失败: {task_name}, 错误: {str(e)}")
+                print(f"❌ Task {i+1}/{len(tasks)} failed: {task_name}, error: {str(e)}")
                 results.append((None, {"error": str(e)}))
         
         return results
 
 
-# 便捷函数
-def quick_navigate(ply_path: str, 
-                  jsonl_path: str, 
+# Convenience function
+def quick_navigate(ply_path: str,
+                  jsonl_path: str,
                   output_path: str,
                   scene_path: Optional[str] = None,
                   yaml_path: str = "config/benchmark/nav/pointnav/pointnav_scannet.yaml") -> str:
     """
-    快速导航函数
-    
+    Quick navigation function
+
     Args:
-        ply_path: 点云文件路径
-        jsonl_path: 语义分割结果文件路径
-        output_path: 输出路径
-        scene_path: 场景文件路径 (.glb)
-        yaml_path: Habitat配置文件路径
-        
+        ply_path: Point cloud file path
+        jsonl_path: Semantic segmentation result file path
+        output_path: Output path
+        scene_path: Scene file path (.glb)
+        yaml_path: Habitat configuration file path
+
     Returns:
-        str: 生成的视频文件路径
+        str: Generated video file path
     """
     api = NavigationAPI(yaml_path=yaml_path, scene_path=scene_path)
     video_path, stats = api.navigate_to_target(ply_path, jsonl_path, output_path, scene_path)
-    print(f"导航完成! 视频保存至: {video_path}")
-    print(f"导航统计: {stats}")
+    print(f"Navigation completed! Video saved to: {video_path}")
+    print(f"Navigation statistics: {stats}")
     return video_path
 
 
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="Habitat导航API")
-    parser.add_argument("--ply_path", required=True, help="点云文件路径")
-    parser.add_argument("--jsonl_path", required=True, help="语义分割结果文件路径")
-    parser.add_argument("--output_path", required=True, help="输出目录路径")
-    parser.add_argument("--scene_path", help="场景文件路径 (.glb)")
+    parser = argparse.ArgumentParser(description="Habitat Navigation API")
+    parser.add_argument("--ply_path", required=True, help="Point cloud file path")
+    parser.add_argument("--jsonl_path", required=True, help="Semantic segmentation result file path")
+    parser.add_argument("--output_path", required=True, help="Output directory path")
+    parser.add_argument("--scene_path", help="Scene file path (.glb)")
     parser.add_argument("--yaml_path", 
                        default="config/benchmark/nav/pointnav/pointnav_scannet.yaml",
-                       help="Habitat配置文件路径")
-    parser.add_argument("--video_name", help="自定义视频名称")
+                       help="Habitat configuration file path")
+    parser.add_argument("--video_name", help="Custom video name")
     
     args = parser.parse_args()
     
@@ -692,8 +692,8 @@ if __name__ == "__main__":
             args.scene_path,
             args.video_name
         )
-        print(f"✅ 导航成功完成!")
-        print(f"📹 视频文件: {video_path}")
-        print(f"📊 导航统计: {stats}")
+        print(f"✅ Navigation completed successfully!")
+        print(f"📹 Video file: {video_path}")
+        print(f"📊 Navigation statistics: {stats}")
     except Exception as e:
-        print(f"❌ 导航失败: {str(e)}")
+        print(f"❌ Navigation failed: {str(e)}")

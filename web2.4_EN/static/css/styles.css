@@ -1,4 +1,4 @@
-/* --- 全局样式 & 变量 --- */
+/* --- Global Styles & Variables --- */
 :root {
     --primary-color: #007bff;
     --primary-hover-color: #0056b3;
@@ -21,7 +21,7 @@ body, html {
     overflow: hidden;
 }
 
-/* --- 主布局 --- */
+/* --- Main Layout --- */
 .main-container {
     display: flex;
     flex-direction: column;
@@ -50,7 +50,7 @@ body, html {
     gap: 15px;
 }
 
-/* --- 3D 视图和聊天容器 --- */
+/* --- 3D View and Chat Containers --- */
 .viewer-container {
     flex: 3;
     display: flex;
@@ -70,7 +70,7 @@ body, html {
     overflow: hidden;
 }
 
-/* --- 3D 视图控件 --- */
+/* --- 3D View Controls --- */
 .viewer-controls {
     display: flex;
     padding: 10px;
@@ -116,7 +116,7 @@ body, html {
     color: var(--text-color);
 }
 
-/* --- 通用按钮和输入框 --- */
+/* --- Common Buttons and Input Fields --- */
 .btn {
     padding: 8px 16px;
     border: 1px solid var(--border-color);
@@ -143,7 +143,7 @@ body, html {
     cursor: not-allowed;
 }
 
-/* --- 聊天界面 --- */
+/* --- Chat Interface --- */
 .chat-header {
     padding: 15px;
     font-weight: bold;
@@ -178,7 +178,7 @@ body, html {
     font-size: 14px;
 }
 
-/* --- 聊天消息样式 (全新设计) --- */
+/* --- Chat Message Styles (New Design) --- */
 .message-wrapper {
     display: flex;
     align-items: flex-start;
@@ -229,7 +229,7 @@ body, html {
     border-bottom-left-radius: 2px;
 }
 
-/* 嵌入式内容样式 */
+/* Embedded content styles */
 .message-wrapper .inline-viewer-container {
     width: 100%;
     height: 280px;
@@ -248,7 +248,7 @@ body, html {
     color: #6c757d;
 }
 
-/* --- 模态框 --- */
+/* --- Modal Dialogs --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -294,49 +294,49 @@ body, html {
 
 
 /* ==========================================================================
-   移动端响应式适配 (Mobile Responsive Styles)
-   当屏幕宽度小于等于 768px 时生效
+   Mobile Responsive Styles
+   Applied when screen width is 768px or less
    ========================================================================== */
 
 @media (max-width: 768px) {
 
-    /* 1. 调整主布局，从左右变为上下 */
+    /* 1. Adjust main layout from left-right to top-bottom */
     .content-wrapper {
-        flex-direction: column; /* 这是最关键的改动 */
-        padding: 10px;          /* 减小页面边距 */
-        gap: 10px;              /* 减小容器间距 */
-        height: calc(100vh - var(--header-height)); /* 确保高度正确 */
+        flex-direction: column; /* This is the most critical change */
+        padding: 10px;          /* Reduce page margins */
+        gap: 10px;              /* Reduce container spacing */
+        height: calc(100vh - var(--header-height)); /* Ensure height is correct */
     }
 
-    /* 2. 重设 3D 视图和聊天容器的尺寸 */
+    /* 2. Resize 3D view and chat containers */
     .viewer-container {
-        flex: 1; /* 让它占据可用的垂直空间，可以根据需要调整比例 */
-        min-height: 300px; /* 给一个最小高度，防止被过度压缩 */
+        flex: 1; /* Let it occupy available vertical space, can adjust ratio as needed */
+        min-height: 300px; /* Give a minimum height to prevent over-compression */
     }
 
     .chat-container {
-        flex: 1; /* 与视图容器平分高度，或者你可以设为 flex: 0.8 来让它小一点 */
+        flex: 1; /* Share height with view container equally, or you can set to flex: 0.8 to make it smaller */
         min-height: 300px;
     }
 
-    /* 3. 优化头部和字体 */
+    /* 3. Optimize header and fonts */
     .main-header h1 {
-        font-size: 1.2rem; /* 缩小标题字体 */
+        font-size: 1.2rem; /* Reduce title font size */
     }
 
-    /* 4. 优化聊天气泡的最大宽度，使其在窄屏下更美观 */
+    /* 4. Optimize chat bubble max width for better appearance on narrow screens */
     .message-wrapper {
-        max-width: 95%; /* 允许消息气泡使用更多宽度 */
+        max-width: 95%; /* Allow message bubbles to use more width */
     }
 
-    /* 5. 调整嵌入式3D视图的高度 */
+    /* 5. Adjust embedded 3D view height */
     .message-wrapper .inline-viewer-container {
-        height: 220px; /* 适当减小聊天框内嵌视图的高度 */
+        height: 220px; /* Appropriately reduce height of embedded view in chat box */
     }
 
-    /* 6. (可选) 优化按钮和输入框的触摸体验 */
+    /* 6. (Optional) Optimize button and input touch experience */
     .btn, .chat-input, .mode-select {
-        padding: 12px; /* 增大触摸区域 */
+        padding: 12px; /* Increase touch area */
     }
 
 }

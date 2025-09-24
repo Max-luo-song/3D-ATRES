@@ -18,16 +18,4 @@ if found:
     print("✅ SUCCESS: Python found a file with the exact name 'llmapi.py'.")
 else:
     print("❌ FAILURE: Python did NOT find a file with the exact name 'llmapi.py'.")
-    print("Look at the byte output above to see the actual filenames."
-
-
-
-
-
-
-
-
-·X
-X
-
-XX
+    print("Look at the byte output above to see the actual filenames.")
